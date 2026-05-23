@@ -18,12 +18,289 @@ const FABXTension = {
         if (!hrf.includes(this.config.foroDomain)) return;
         
         this.log("Inicializando módulos activos...");
+
+        // Fallback cross-browser: aplica el CSS del tema desde content script si el background no inyecta.
+        this.applyStoredThemeOnPageLoad();
+
+        // Integración del selector dentro del menú nativo del foro.
+        this.initThemeMenuInFab();
         
         // 1. Enrutador de URLs (Switch modular)
         this.router(hrf);
         
         // 2. Inicializar detector de imágenes sin enlace
         this.initImageInteractivity();
+    },
+
+    /**
+     * Aplica el tema guardado al documento principal.
+     * Esto cubre navegadores/entornos donde la inyección desde background falle.
+     */
+	applyStoredThemeOnPageLoad: function() {
+        const linkId = 'fab-css-page-tema';
+
+        chrome.storage.local.get({ temaActivo: 'defecto' }, (data) => {
+            const tema = data.temaActivo;
+            const existing = document.getElementById(linkId);
+
+            if (tema === 'defecto') {
+                if (existing) existing.remove();
+                return;
+            }
+
+            const cssURL = chrome.runtime.getURL(`themes/${tema}.css`);
+            if (existing) {
+                if (existing.href !== cssURL) existing.href = cssURL;
+            } else {
+                const link = document.createElement('link');
+                link.id = linkId;
+                link.rel = 'stylesheet';
+                link.type = 'text/css';
+                link.href = cssURL;
+                (document.head || document.documentElement).appendChild(link);
+            }
+
+            if (tema === 'first-blood') {
+                this.applyFirstBloodDropsFallback();
+            }
+        });
+    },
+
+	applyFirstBloodDropsFallback: function() {
+        document.querySelectorAll('button.largeButton, a.largeButton').forEach((boton) => {
+            if (boton.querySelector('.drop')) return;
+
+            for (let i = 0; i < 5; i++) {
+                const drop = document.createElement('span');
+                drop.className = 'drop';
+                boton.appendChild(drop);
+            }
+        });
+    },
+
+    /**
+     * Monta el acceso FABXtension dentro del menú del foro.
+     */
+	initThemeMenuInFab: function() {
+        this.mountThemeMenuInFab();
+
+        if (!document.body.dataset.fabxInitRetryHook) {
+            document.body.dataset.fabxInitRetryHook = '1';
+            // Algunas vistas montan el menú tras pequeños retrasos o cambios de layout.
+            let retries = 0;
+            const intervalId = setInterval(() => {
+                retries += 1;
+                this.mountThemeMenuInFab();
+                if (retries >= 50) {
+                    clearInterval(intervalId);
+                }
+            }, 200);
+        }
+
+        if (!document.body.dataset.fabxMobileMenuHook) {
+            document.body.dataset.fabxMobileMenuHook = '1';
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('a[href="#mainmenu"], a[href$="#mainmenu"]');
+                if (!trigger) return;
+
+                // Reintento breve tras abrir el drawer, ya que mmenu suele montar paneles de forma diferida.
+                let attempts = 0;
+                const clickRetryId = setInterval(() => {
+                    attempts += 1;
+                    if (this.mountThemeMenuInFab() || attempts >= 15) {
+                        clearInterval(clickRetryId);
+                    }
+                }, 120);
+            });
+
+            const observer = new MutationObserver(() => {
+                this.mountThemeMenuInFab();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    },
+
+    /**
+     * Inserta un botón FABXtension en el menú principal y un popup desplegable con opciones.
+     */
+	mountThemeMenuInFab: function() {
+        if (window.top !== window.self) return;
+        const userMenu = document.getElementById('ForoMenuUsuario');
+    const mobileDrawerMenu = document.querySelector(
+        '#mainmenu ul.mm-list.mm-panel.mm-opened.mm-current, #mainmenu ul.mm-list.mm-panel:first-of-type'
+    );
+        if (!userMenu && !mobileDrawerMenu) return false;
+
+        const temas = [
+            { value: 'defecto', label: 'Por defecto' },
+            { value: 'marfil', label: 'marfil' },
+            { value: 'camuflaje', label: 'camuflaje' },
+            { value: 'first-blood', label: 'first blood' }
+        ];
+
+        const popupExists = document.getElementById('fabxtension-menu-popup');
+        let popup = popupExists;
+        let select = document.getElementById('fabxtension-theme-select');
+
+        const syncSelectWithStorage = () => {
+            if (!select) return;
+            chrome.storage.local.get({ temaActivo: 'defecto' }, (data) => {
+                select.value = data.temaActivo;
+            });
+        };
+
+        const closePopup = () => {
+            if (popup) popup.style.display = 'none';
+        };
+
+        const openPopupForTrigger = (trigger) => {
+            if (!popup) return;
+            syncSelectWithStorage();
+
+            const rect = trigger.getBoundingClientRect();
+
+            popup.style.visibility = 'hidden';
+            popup.style.display = 'block';
+
+            const popupWidth = popup.offsetWidth || 240;
+            const popupHeight = popup.offsetHeight || 140;
+            const gap = 6;
+            const minEdge = 8;
+
+            const maxLeft = Math.max(minEdge, window.innerWidth - popupWidth - minEdge);
+            const left = Math.min(Math.max(minEdge, rect.left), maxLeft);
+
+            const preferredTop = rect.bottom + gap;
+            const maxTop = window.innerHeight - popupHeight - minEdge;
+            const top = preferredTop <= maxTop ? preferredTop : Math.max(minEdge, rect.top - popupHeight - gap);
+
+            popup.style.left = `${Math.round(left)}px`;
+            popup.style.top = `${Math.round(top)}px`;
+            popup.style.visibility = 'visible';
+            popup.style.display = 'block';
+        };
+
+        const bindTrigger = (trigger) => {
+            if (!trigger || trigger.dataset.fabxMenuBound === '1') return;
+
+            trigger.dataset.fabxMenuBound = '1';
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const isOpen = popup && popup.style.display === 'block';
+                if (isOpen) {
+                    closePopup();
+                    return;
+                }
+                openPopupForTrigger(trigger);
+            });
+        };
+
+        if (userMenu) {
+            const desktopLinksContainer = userMenu.querySelector('.onlyDesktop .linksContainer');
+            if (desktopLinksContainer && !document.getElementById('fabxtension-menu-trigger-desktop')) {
+                const desktopSlot = document.createElement('div');
+                const desktopTrigger = document.createElement('a');
+                desktopTrigger.id = 'fabxtension-menu-trigger-desktop';
+                desktopTrigger.href = 'javascript:;';
+                desktopTrigger.className = 'softButton';
+                desktopTrigger.title = 'Opciones de FABXtension';
+                desktopTrigger.textContent = 'FABXtension';
+                desktopSlot.appendChild(desktopTrigger);
+                desktopLinksContainer.appendChild(desktopSlot);
+            }
+        }
+
+        if (mobileDrawerMenu && !document.getElementById('fabxtension-menu-trigger-mobile-drawer')) {
+            const li = document.createElement('li');
+            li.id = 'fabxtension-menu-item-mobile-drawer';
+
+            const drawerTrigger = document.createElement('a');
+            drawerTrigger.id = 'fabxtension-menu-trigger-mobile-drawer';
+            drawerTrigger.href = 'javascript:;';
+            drawerTrigger.innerHTML = '<i class="fas fa-sliders-h fa-lg fa-fw"></i> FABXtension';
+
+            li.appendChild(drawerTrigger);
+            mobileDrawerMenu.appendChild(li);
+        }
+
+        if (!popup) {
+            popup = document.createElement('div');
+            popup.id = 'fabxtension-menu-popup';
+            popup.className = 'tabla';
+            Object.assign(popup.style, {
+                position: 'fixed',
+                display: 'none',
+                width: '240px',
+                maxWidth: '92vw',
+                boxSizing: 'border-box',
+                zIndex: '2147483647',
+                padding: '8px'
+            });
+
+            const popupContent = document.createElement('div');
+            popupContent.id = 'fabxtension-menu-content';
+            popupContent.className = 'tablaRow';
+            Object.assign(popupContent.style, {
+                padding: '6px'
+            });
+
+            const label = document.createElement('label');
+            label.htmlFor = 'fabxtension-theme-select';
+            label.textContent = 'Tema:';
+            label.className = 'boxTitle';
+            Object.assign(label.style, {
+                display: 'block',
+                marginBottom: '6px'
+            });
+
+            select = document.createElement('select');
+            select.id = 'fabxtension-theme-select';
+            select.className = 'tabla_input';
+            Object.assign(select.style, {
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                display: 'block'
+            });
+
+            temas.forEach((tema) => {
+                const option = document.createElement('option');
+                option.value = tema.value;
+                option.textContent = tema.label;
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', () => {
+                const nuevoTema = select.value;
+                chrome.storage.local.set({ temaActivo: nuevoTema }, () => {
+                    window.location.reload();
+                });
+            });
+
+            popup.addEventListener('click', (e) => e.stopPropagation());
+
+            document.addEventListener('click', () => {
+                closePopup();
+            });
+
+            window.addEventListener('resize', () => {
+                closePopup();
+            });
+
+            popupContent.appendChild(label);
+            popupContent.appendChild(select);
+            popup.appendChild(popupContent);
+
+            document.body.appendChild(popup);
+        }
+
+        bindTrigger(document.getElementById('fabxtension-menu-trigger-desktop'));
+        bindTrigger(document.getElementById('fabxtension-menu-trigger-mobile-drawer'));
+
+        syncSelectWithStorage();
+        return true;
     },
     
     /**
@@ -73,10 +350,10 @@ const FABXTension = {
                 }
             }, 100);
             
-			// NUEVO: Vigilante para la Barra de Herramientas 3 (Emoticonos)
+			// NUEVO: Vigilante para la Barra de Herramientas 2 (Emoticonos)
             const buscarToolbar = setInterval(() => {
-                // Buscamos la fila del cuerpo de la tabla de la toolbar 3
-                const mceToolbarRow = document.querySelector('#tinyMCE_texto_toolbar3 tbody tr');
+                // Buscamos la fila del cuerpo de la tabla de la toolbar 2
+                const mceToolbarRow = document.querySelector('#tinyMCE_texto_toolbar2 tbody tr');
                 
                 if (mceToolbarRow) {
                     clearInterval(buscarToolbar);
@@ -93,7 +370,20 @@ const FABXTension = {
             if (document.getElementById('fab_custom_emojis_btn')) {
                 return;
             }
-            console.log("[FAB] Fila de herramientas 3 detectada. Acoplando botón de emojis...");
+            console.log("[FAB] Fila de herramientas 2 detectada. Acoplando botón de emojis...");
+
+            // Inserta separador visual antes del botón de emojis.
+            const separadorCelda = document.createElement('td');
+            separadorCelda.style.position = 'relative';
+
+            const separador = document.createElement('span');
+            separador.className = 'mceSeparator';
+            separador.setAttribute('role', 'separator');
+            separador.setAttribute('aria-orientation', 'vertical');
+            separador.setAttribute('tabindex', '-1');
+
+            separadorCelda.appendChild(separador);
+            toolbarRow.appendChild(separadorCelda);
 
             // 1. Creamos la celda <td> siguiendo la estructura exacta de TinyMCE
             const nuevaCelda = document.createElement('td');
@@ -113,7 +403,7 @@ const FABXTension = {
             boton.textContent = '😎'; // Icono provisional visual de 16x16 aprox.
 
             nuevaCelda.appendChild(boton);
-            toolbarRow.appendChild(nuevaCelda); // Lo enganchamos al final de la fila 3
+            toolbarRow.appendChild(nuevaCelda); // Lo enganchamos al final de la fila 2
 
             // 3. Cargamos el archivo JSON de forma asíncrona desde nuestra carpeta res/
             const jsonURL = chrome.runtime.getURL('res/emojis.json');
@@ -166,6 +456,22 @@ const FABXTension = {
             const popup = document.createElement('div');
             popup.className = 'fab-emoji-popup';
             popup.style.display = 'none';
+            Object.assign(popup.style, {
+                position: 'absolute',
+                width: '350px',
+                maxWidth: '92vw',
+                maxHeight: '350px',
+                backgroundColor: '#f0f0f0',
+                border: '1px solid #999',
+                boxShadow: '0px 4px 10px rgba(0,0,0,0.2)',
+                zIndex: '200000',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gap: '6px',
+                padding: '8px',
+                overflowY: 'auto',
+                borderRadius: '4px',
+                boxSizing: 'border-box'
+            });
 
             // Evitamos que hacer clic dentro del panel lo cierre solo
             popup.addEventListener('click', (e) => e.stopPropagation());
@@ -175,10 +481,25 @@ const FABXTension = {
                 const item = document.createElement('div');
                 item.className = 'fab-emoji-item';
                 item.title = emoji.alt;
+                Object.assign(item.style, {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    border: '1px solid transparent',
+                    borderRadius: '4px',
+                    backgroundColor: '#fff'
+                });
 
                 const img = document.createElement('img');
                 img.src = emoji.url;
                 img.alt = emoji.alt;
+                Object.assign(img.style, {
+                    maxWidth: '32px',
+                    maxHeight: '32px',
+                    objectFit: 'contain'
+                });
 
                 item.appendChild(img);
                 popup.appendChild(item);

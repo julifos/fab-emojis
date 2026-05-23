@@ -76,36 +76,17 @@ body#tinymce p, body#tinymce span {
 
 /* Contenedor flotante de emoticonos */
 .fab-emoji-popup {
-    position: absolute;
-    width: 350px;
-    max-height: 350px;
-    background-color: #f0f0f0;
-    border: 1px solid #999;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-    z-index: 200000;
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    padding: 8px;
-    overflow-y: auto;
-    border-radius: 4px;
+    background-color: #f0f0f0 !important;
+    border: 1px solid #999 !important;
 }
 
 /* Cada casilla de emoticono dentro del panel */
 .fab-emoji-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    background-color: #fff;
-    transition: transform 0.1s;
+    background-color: #fff !important;
 }
 .fab-emoji-item:hover {
-    border: 1px solid #3b6ea5;
-    background-color: #eaf2fb;
+    border: 1px solid #3b6ea5 !important;
+    background-color: #eaf2fb !important;
     transform: scale(1.1);
 }
 .fab-emoji-item img {
