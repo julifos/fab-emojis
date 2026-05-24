@@ -6,5 +6,101 @@
 	"appDesc": {
 	  "message": "Fine-tune your experience in the Foro de Armas Blancas", 
 	  "description":""
+	},
+	"menuThemeTitle": {
+	  "message": "Theme",
+	  "description": "Theme submenu title"
+	},
+	"menuDefaultTitle": {
+	  "message": "Default",
+	  "description": "Visible label for default theme"
+	},
+	"shareButtonTitle": {
+	  "message": "Share this thread",
+	  "description": "Share button tooltip"
+	},
+	"shareFacebookTitle": {
+	  "message": "Facebook",
+	  "description": "Facebook network name"
+	},
+	"shareXTitle": {
+	  "message": "X",
+	  "description": "X network name"
+	},
+	"shareWhatsAppTitle": {
+	  "message": "WhatsApp",
+	  "description": "WhatsApp network name"
+	},
+	"shareOnPrefix": {
+	  "message": "Share on",
+	  "description": "Prefix for share option tooltips"
+	},
+	"fabxOptionsTitle": {
+	  "message": "FABXTension options",
+	  "description": "Tooltip for FABXTension menu entry"
+	},
+	"themeLabel": {
+	  "message": "Theme:",
+	  "description": "Theme selector label"
+	},
+	"emojiButtonTitle": {
+	  "message": "Insert Extended Emoji Kit",
+	  "description": "Emoji button tooltip"
+	},
+	"contextRootTitle": {
+	  "message": "FAB",
+	  "description": "Context menu root title"
+	},
+	"contextSearchFab": {
+	  "message": "Search in FAB",
+	  "description": "Direct forum search action"
+	},
+	"contextSearchFabGoogle": {
+	  "message": "Search in FAB with Google",
+	  "description": "Google site-restricted search action"
+	},
+	"imgbbUploadButtonTitle": {
+	  "message": "Upload image to ImgBB",
+	  "description": "Tooltip for ImgBB upload button"
+	},
+	"postimagesUploadButtonTitle": {
+	  "message": "Upload image to Postimages",
+	  "description": "Tooltip for Postimages upload button"
+	},
+	"imageUploadDropMessage": {
+	  "message": "Drag, paste or click to upload images",
+	  "description": "Upload dropzone message"
+	},
+	"imageUploadUploading": {
+	  "message": "Uploading...",
+	  "description": "Status while images are uploading"
+	},
+	"imageUploadErrorPrefix": {
+	  "message": "Upload error",
+	  "description": "Upload error prefix"
+	},
+	"imageUploadNoImagesError": {
+	  "message": "No valid images in selection",
+	  "description": "Error shown when no valid image files are found"
+	},
+	"imgbbTokenError": {
+	  "message": "Could not get ImgBB token",
+	  "description": "Error while obtaining ImgBB auth token"
+	},
+	"imageUploadGenericError": {
+	  "message": "Upload rejected by the service",
+	  "description": "Generic provider-side upload error"
+	},
+	"postimagesResponseError": {
+	  "message": "Postimages did not return a URL",
+	  "description": "Error when Postimages response has no URL"
+	},
+	"postimagesResolveError": {
+	  "message": "Could not resolve direct URL from Postimages",
+	  "description": "Error resolving i.postimg.cc URL from postimg.cc page"
+	},
+	"editorIframeError": {
+	  "message": "Editor iframe not found",
+	  "description": "Error locating TinyMCE iframe"
 	}
 }

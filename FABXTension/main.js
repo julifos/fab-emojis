@@ -1,6 +1,14 @@
 /**
  * FABXTension - Core Content Script Module
  */
+const t = (key, fallback) => {
+    try {
+        return chrome.i18n.getMessage(key) || fallback;
+    } catch (e) {
+        return fallback;
+    }
+};
+
 const FABXTension = {
     // Configuración y estados globales del script
     config: {
@@ -73,7 +81,7 @@ const FABXTension = {
         const shareBtn = document.createElement('a');
         shareBtn.id = 'fab-share-button';
         shareBtn.href = 'javascript:;';
-        shareBtn.title = 'Compartir este hilo';
+        shareBtn.title = t('shareButtonTitle', 'Compartir este hilo');
         shareBtn.className = 'tabla_boton largeButton';
         shareBtn.innerHTML = '<span class="fab-share-main-icon" aria-hidden="true"></span>';
         Object.assign(shareBtn.style, {
@@ -117,17 +125,17 @@ const FABXTension = {
 
         const items = [
             {
-            	title:'Facebook',
+	            title: t('shareFacebookTitle', 'Facebook'),
                 icon: 'facebook.png',
                 url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
             },
             {
-            	title:'X',
+	            title: t('shareXTitle', 'X'),
                 icon: 'x.png',
                 url: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent(pageTitle)}`
             },
             {
-            	title:'WhatsApp',
+	            title: t('shareWhatsAppTitle', 'WhatsApp'),
                 icon: 'whatsapp.png',
                 url: `https://wa.me/?text=${encodedText}`
             }
@@ -136,7 +144,7 @@ const FABXTension = {
         items.forEach((item) => {
             const link = document.createElement('a');
             link.href = item.url;
-            link.title = 'Compartir en ' + item.title;
+            link.title = `${t('shareOnPrefix', 'Compartir en')} ${item.title}`;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
             Object.assign(link.style, {
@@ -289,7 +297,7 @@ const FABXTension = {
         if (!userMenu && !mobileDrawerMenu) return false;
 
         const temas = [
-            { value: 'defecto', label: 'Por defecto' },
+            { value: 'defecto', label: t('menuDefaultTitle', 'Por defecto') },
             { value: 'marfil', label: 'marfil' },
             { value: 'camuflaje', label: 'camuflaje' },
             { value: 'first-blood', label: 'first blood' }
@@ -362,7 +370,7 @@ const FABXTension = {
                 desktopTrigger.id = 'fabxtension-menu-trigger-desktop';
                 desktopTrigger.href = 'javascript:;';
                 desktopTrigger.className = 'softButton';
-                desktopTrigger.title = 'Opciones de FABXtension';
+                desktopTrigger.title = t('fabxOptionsTitle', 'Opciones de FABXtension');
                 desktopTrigger.textContent = 'FABXtension';
                 desktopSlot.appendChild(desktopTrigger);
                 desktopLinksContainer.appendChild(desktopSlot);
@@ -405,7 +413,7 @@ const FABXTension = {
 
             const label = document.createElement('label');
             label.htmlFor = 'fabxtension-theme-select';
-            label.textContent = 'Tema:';
+            label.textContent = t('themeLabel', 'Tema:');
             label.className = 'boxTitle';
             Object.assign(label.style, {
                 display: 'block',
@@ -509,14 +517,76 @@ const FABXTension = {
             
 			// NUEVO: Vigilante para la Barra de Herramientas 2 (Emoticonos)
             const buscarToolbar = setInterval(() => {
-                // Buscamos la fila del cuerpo de la tabla de la toolbar 2
-                const mceToolbarRow = document.querySelector('#tinyMCE_texto_toolbar2 tbody tr');
+                const mceToolbarRow = this.obtenerFilaToolbarFAB();
                 
                 if (mceToolbarRow) {
                     clearInterval(buscarToolbar);
                     this.prepararKitEmoticonos(mceToolbarRow);
                 }
             }, 100);
+        },
+
+        esFirefoxMobile: function() {
+            const ua = navigator.userAgent || '';
+            return /Firefox/i.test(ua) && /(Mobile|Android|Fennec|Tablet)/i.test(ua);
+        },
+
+        obtenerFilaToolbarFAB: function() {
+            if (this.esFirefoxMobile()) {
+                const filaMovil = this.asegurarToolbarFABMobile();
+                if (filaMovil) return filaMovil;
+            }
+
+            return document.querySelector('#tinyMCE_texto_toolbar2 tbody tr');
+        },
+
+        asegurarToolbarFABMobile: function() {
+            const toolbar2 = document.getElementById('tinyMCE_texto_toolbar2');
+            if (!toolbar2 || !toolbar2.parentNode) return null;
+
+            let toolbar3 = document.getElementById('fab_tinyMCE_texto_toolbar3');
+            if (!toolbar3) {
+                toolbar3 = document.createElement('table');
+                toolbar3.id = 'fab_tinyMCE_texto_toolbar3';
+                toolbar3.className = toolbar2.className || 'mceToolbar mceToolbarRow3 Enabled';
+                toolbar3.setAttribute('cellpadding', toolbar2.getAttribute('cellpadding') || '0');
+                toolbar3.setAttribute('cellspacing', toolbar2.getAttribute('cellspacing') || '0');
+                toolbar3.setAttribute('align', toolbar2.getAttribute('align') || '');
+                toolbar3.setAttribute('role', toolbar2.getAttribute('role') || 'presentation');
+                toolbar3.setAttribute('tabindex', toolbar2.getAttribute('tabindex') || '-1');
+                toolbar3.setAttribute('aria-disabled', toolbar2.getAttribute('aria-disabled') || 'false');
+                toolbar3.setAttribute('aria-pressed', toolbar2.getAttribute('aria-pressed') || 'false');
+
+                const tbody = document.createElement('tbody');
+                const row = document.createElement('tr');
+
+                const start = document.createElement('td');
+                start.className = 'mceToolbarStart mceToolbarStartButton mceFirst';
+                start.innerHTML = '<span></span>';
+
+                const end = document.createElement('td');
+                end.className = 'mceToolbarEnd mceToolbarEndButton mceLast';
+                end.innerHTML = '<span></span>';
+
+                row.appendChild(start);
+                row.appendChild(end);
+                tbody.appendChild(row);
+                toolbar3.appendChild(tbody);
+
+                toolbar2.parentNode.insertBefore(toolbar3, toolbar2.nextSibling);
+                console.log('[FAB] Toolbar FAB móvil creada tras #tinyMCE_texto_toolbar2');
+            }
+
+            return toolbar3.querySelector('tbody tr');
+        },
+
+        insertarEnToolbar: function(toolbarRow, celda) {
+            const endCell = toolbarRow.querySelector('td.mceToolbarEnd');
+            if (endCell) {
+                toolbarRow.insertBefore(celda, endCell);
+                return;
+            }
+            toolbarRow.appendChild(celda);
         },
 
         /**
@@ -540,7 +610,7 @@ const FABXTension = {
             separador.setAttribute('tabindex', '-1');
 
             separadorCelda.appendChild(separador);
-            toolbarRow.appendChild(separadorCelda);
+            this.insertarEnToolbar(toolbarRow, separadorCelda);
 
             // 1. Creamos la celda <td> siguiendo la estructura exacta de TinyMCE
             const nuevaCelda = document.createElement('td');
@@ -552,15 +622,31 @@ const FABXTension = {
             boton.id = 'fab_custom_emojis_btn';
             boton.href = 'javascript:;';
             boton.className = 'mceButton mceButtonEnabled fab-mce-button';
-            boton.title = 'Insertar Emoticonos del Kit Extendido';
+            boton.title = t('emojiButtonTitle', 'Insertar Emoticonos del Kit Extendido');
             boton.style.display = 'flex';
             boton.style.alignItems = 'center';
             boton.style.justifyContent = 'center';
+            boton.style.setProperty('width', 'auto', 'important');
+            boton.style.setProperty('height', 'auto', 'important');
             boton.style.fontSize = '14px';
             boton.textContent = '😎'; // Icono provisional visual de 16x16 aprox.
 
             nuevaCelda.appendChild(boton);
-            toolbarRow.appendChild(nuevaCelda); // Lo enganchamos al final de la fila 2
+            this.insertarEnToolbar(toolbarRow, nuevaCelda);
+
+            this.agregarBotonSubidaImagen(toolbarRow, {
+                id: 'fab_imgbb_upload_btn',
+                title: t('imgbbUploadButtonTitle', 'Subir imagen a ImgBB'),
+                iconFile: 'imgbb.png',
+                provider: 'imgbb'
+            });
+
+            this.agregarBotonSubidaImagen(toolbarRow, {
+                id: 'fab_postimages_upload_btn',
+                title: t('postimagesUploadButtonTitle', 'Subir imagen a Postimages'),
+                iconFile: 'postimages.png',
+                provider: 'postimages'
+            });
 
             // 3. Cargamos el archivo JSON de forma asíncrona desde nuestra carpeta res/
             const jsonURL = chrome.runtime.getURL('res/emojis.json');
@@ -603,7 +689,272 @@ const FABXTension = {
             // Cerrar el panel flotante si se hace clic en cualquier otra parte de la pantalla
             document.addEventListener('click', () => {
                 document.querySelectorAll('.fab-emoji-popup').forEach(p => p.style.display = 'none');
+                document.querySelectorAll('.fab-image-upload-popup').forEach(p => p.style.display = 'none');
             });
+        },
+
+        agregarBotonSubidaImagen: function(toolbarRow, config) {
+            if (document.getElementById(config.id)) {
+                return;
+            }
+
+            const separadorCelda = document.createElement('td');
+            separadorCelda.style.position = 'relative';
+
+            const separador = document.createElement('span');
+            separador.className = 'mceSeparator';
+            separador.setAttribute('role', 'separator');
+            separador.setAttribute('aria-orientation', 'vertical');
+            separador.setAttribute('tabindex', '-1');
+            separadorCelda.appendChild(separador);
+            this.insertarEnToolbar(toolbarRow, separadorCelda);
+
+            const celda = document.createElement('td');
+            celda.style.position = 'relative';
+
+            const boton = document.createElement('a');
+            boton.role = 'button';
+            boton.id = config.id;
+            boton.href = 'javascript:;';
+            boton.className = 'mceButton mceButtonEnabled fab-mce-button';
+            boton.title = config.title;
+            boton.style.display = 'inline-flex';
+            boton.style.alignItems = 'center';
+            boton.style.justifyContent = 'center';
+            boton.style.setProperty('width', 'auto', 'important');
+            boton.style.setProperty('height', 'auto', 'important');
+            boton.style.gap = '4px';
+            boton.style.padding = '0 4px';
+
+            const leading = document.createElement('span');
+            leading.textContent = '🖼️';
+            boton.appendChild(leading);
+
+            const img = document.createElement('img');
+            img.src = chrome.runtime.getURL(`res/${config.iconFile}`);
+            img.alt = '';
+            img.className = 'fab-upload-control-icon';
+            img.style.maxHeight = '22px';
+            img.style.width = 'auto';
+            boton.appendChild(img);
+
+            boton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.abrirPopupSubidaImagen(config.provider);
+            });
+
+            celda.appendChild(boton);
+            this.insertarEnToolbar(toolbarRow, celda);
+        },
+
+        abrirPopupSubidaImagen: function(provider) {
+            const popup = this.obtenerPopupSubidaImagen();
+            const titleEl = popup.querySelector('[data-fab-upload-title]');
+            const statusEl = popup.querySelector('[data-fab-upload-status]');
+
+            titleEl.textContent = provider === 'imgbb'
+                ? t('imgbbUploadButtonTitle', 'Subir imagen a ImgBB')
+                : t('postimagesUploadButtonTitle', 'Subir imagen a Postimages');
+            statusEl.textContent = '';
+            popup.dataset.provider = provider;
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        },
+
+        obtenerPopupSubidaImagen: function() {
+            let popup = document.getElementById('fab-image-upload-popup');
+            if (popup) return popup;
+
+            popup = document.createElement('div');
+            popup.id = 'fab-image-upload-popup';
+            popup.className = 'fab-image-upload-popup tabla';
+            popup.style.display = 'none';
+            Object.assign(popup.style, {
+                position: 'fixed',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '200px',
+                height: '200px',
+                zIndex: '2147483647',
+                border: '1px solid #999',
+                borderRadius: '6px',
+                backgroundColor: '#f0f0f0',
+                color: '#000',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
+                overflow: 'hidden',
+                boxSizing: 'border-box'
+            });
+
+            const box = document.createElement('div');
+            Object.assign(box.style, {
+                width: '100%',
+                height: '100%',
+                padding: '8px',
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                textAlign: 'center',
+                color: '#000'
+            });
+
+            const title = document.createElement('div');
+            title.setAttribute('data-fab-upload-title', '1');
+            title.style.fontSize = '12px';
+            title.style.fontWeight = 'bold';
+            title.style.lineHeight = '1.2';
+
+            const uploadIcon = document.createElement('img');
+            uploadIcon.src = chrome.runtime.getURL('res/upload.png');
+            uploadIcon.alt = '';
+            uploadIcon.className = 'fab-upload-control-icon';
+            uploadIcon.style.maxHeight = '42px';
+            uploadIcon.style.width = 'auto';
+
+            const msg = document.createElement('div');
+            msg.textContent = t('imageUploadDropMessage', 'Arrastra, pega o clic para subir imagenes');
+            msg.style.fontSize = '12px';
+            msg.style.lineHeight = '1.25';
+
+            const status = document.createElement('div');
+            status.setAttribute('data-fab-upload-status', '1');
+            status.style.fontSize = '11px';
+            status.style.lineHeight = '1.2';
+
+            title.style.color = '#000';
+            msg.style.color = '#000';
+            status.style.color = '#000';
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = true;
+            input.style.display = 'none';
+
+            const processSelected = async (files) => {
+                if (!files || files.length === 0) return;
+                const provider = popup.dataset.provider || 'imgbb';
+                status.textContent = t('imageUploadUploading', 'Subiendo...');
+
+                try {
+                    const urls = await this.subirImagenesProveedor(Array.from(files), provider);
+                    if (urls.length > 0) {
+                        this.inyectarImagenesEnEditor(urls);
+                        popup.style.display = 'none';
+                        status.textContent = '';
+                    }
+                } catch (err) {
+                    status.textContent = `${t('imageUploadErrorPrefix', 'Error al subir')}: ${err.message || err}`;
+                }
+            };
+
+            box.addEventListener('click', () => input.click());
+            input.addEventListener('change', (e) => processSelected(e.target.files));
+
+            box.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                box.style.backgroundColor = '#dce8ff';
+            });
+
+            box.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                box.style.backgroundColor = 'transparent';
+            });
+
+            box.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                box.style.backgroundColor = 'transparent';
+                processSelected(e.dataTransfer.files);
+            });
+
+            document.addEventListener('paste', (e) => {
+                if (popup.style.display !== 'block') return;
+                const files = [];
+                if (e.clipboardData && e.clipboardData.items) {
+                    Array.from(e.clipboardData.items).forEach((item) => {
+                        if (item.type && item.type.startsWith('image/')) {
+                            const f = item.getAsFile();
+                            if (f) files.push(f);
+                        }
+                    });
+                }
+                if (files.length > 0) processSelected(files);
+            });
+
+            popup.addEventListener('click', (e) => e.stopPropagation());
+
+            box.appendChild(title);
+            box.appendChild(uploadIcon);
+            box.appendChild(msg);
+            box.appendChild(status);
+            box.appendChild(input);
+            popup.appendChild(box);
+            document.body.appendChild(popup);
+            return popup;
+        },
+
+        subirImagenesProveedor: async function(files, provider) {
+            const imageFiles = files.filter((f) => f && f.type && f.type.startsWith('image/'));
+            if (imageFiles.length === 0) {
+                throw new Error(t('imageUploadNoImagesError', 'No hay imagenes validas en la seleccion'));
+            }
+            const serializar = (file) => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({
+                    name: file.name,
+                    type: file.type,
+                    dataUrl: reader.result
+                });
+                reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+                reader.readAsDataURL(file);
+            });
+
+            const payloadFiles = await Promise.all(imageFiles.map((f) => serializar(f)));
+
+            const response = await new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage({
+                    action: 'fabUploadImages',
+                    provider,
+                    files: payloadFiles
+                }, (result) => {
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(chrome.runtime.lastError.message));
+                        return;
+                    }
+                    resolve(result || {});
+                });
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || t('imageUploadGenericError', 'Subida rechazada por el servicio'));
+            }
+
+            return response.urls || [];
+        },
+
+        inyectarImagenesEnEditor: function(urls) {
+            try {
+                const iframe = document.getElementById('tinyMCE_texto_ifr');
+                if (!iframe) {
+                    throw new Error(t('editorIframeError', 'No se encontro el iframe del editor'));
+                }
+
+                const docInterno = iframe.contentDocument || iframe.contentWindow.document;
+                const bodyInterno = docInterno.getElementById('tinymce');
+                if (bodyInterno) bodyInterno.focus();
+
+                const html = urls.map((url) => `<p><img src="${url}" /></p>`).join('');
+                docInterno.execCommand('insertHTML', false, html);
+            } catch (err) {
+                console.error('[FAB Error] Fallo al insertar imagenes en el editor:', err);
+            }
         },
 
         /**
@@ -747,6 +1098,21 @@ const FABXTension = {
 	/**
      * Interactividad blindada mediante una máscara de control estática
      */
+	isImagenDePostPublicado: function(img) {
+        let parent = img ? img.parentElement : null;
+        let depth = 0;
+
+        while (parent && depth < 4) {
+            if (parent.tagName === 'DIV' && parent.classList.contains('contenido_msg')) {
+                return true;
+            }
+            parent = parent.parentElement;
+            depth += 1;
+        }
+
+        return false;
+    },
+
 	initImageInteractivity: function() {
         this.log("Iniciando escucha mediante máscara estática...");
 
@@ -759,10 +1125,19 @@ const FABXTension = {
                 return; 
             }
 
+            // Evita zoom dentro del popup de subida y sobre sus iconos de control.
+            if (e.target.closest('.fab-image-upload-popup') || e.target.closest('.fab-upload-control-icon')) {
+                return;
+            }
+
             const mascara = e.target.closest('.fab-img-mask');
             const img = e.target.closest('img');
 
             if ((!img && !mascara) || (img && img.closest('a'))) return;
+
+            if (img && !this.isImagenDePostPublicado(img)) {
+                return;
+            }
 
             e.preventDefault();
             e.stopPropagation();

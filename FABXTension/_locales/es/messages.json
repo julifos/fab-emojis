@@ -6,5 +6,101 @@
 	"appDesc": {
 	  "message": "Tunea tu experiencia en el Foro de Armas Blancas", 
 	  "description":""
+	},
+	"menuThemeTitle": {
+	  "message": "Tema",
+	  "description": "Título del submenú de temas"
+	},
+	"menuDefaultTitle": {
+	  "message": "Por defecto",
+	  "description": "Etiqueta visible para el tema por defecto"
+	},
+	"shareButtonTitle": {
+	  "message": "Compartir este hilo",
+	  "description": "Tooltip del botón de compartir"
+	},
+	"shareFacebookTitle": {
+	  "message": "Facebook",
+	  "description": "Nombre de red social Facebook"
+	},
+	"shareXTitle": {
+	  "message": "X",
+	  "description": "Nombre de red social X"
+	},
+	"shareWhatsAppTitle": {
+	  "message": "WhatsApp",
+	  "description": "Nombre de red social WhatsApp"
+	},
+	"shareOnPrefix": {
+	  "message": "Compartir en",
+	  "description": "Prefijo en tooltips de opciones para compartir"
+	},
+	"fabxOptionsTitle": {
+	  "message": "Opciones de FABXTension",
+	  "description": "Tooltip del acceso FABXTension en menús"
+	},
+	"themeLabel": {
+	  "message": "Tema:",
+	  "description": "Etiqueta del selector de tema"
+	},
+	"emojiButtonTitle": {
+	  "message": "Insertar Emoticonos del Kit Extendido",
+	  "description": "Tooltip del botón de emojis"
+	},
+	"contextRootTitle": {
+	  "message": "FAB",
+	  "description": "Título raíz del menú contextual"
+	},
+	"contextSearchFab": {
+	  "message": "Buscar en el FAB",
+	  "description": "Acción de búsqueda directa en el foro"
+	},
+	"contextSearchFabGoogle": {
+	  "message": "Buscar en el FAB con Google",
+	  "description": "Acción de búsqueda en Google acotada al foro"
+	},
+	"imgbbUploadButtonTitle": {
+	  "message": "Subir imagen a ImgBB",
+	  "description": "Tooltip del botón de subida a ImgBB"
+	},
+	"postimagesUploadButtonTitle": {
+	  "message": "Subir imagen a Postimages",
+	  "description": "Tooltip del botón de subida a Postimages"
+	},
+	"imageUploadDropMessage": {
+	  "message": "Arrastra, pega o clic para subir imágenes",
+	  "description": "Mensaje del área de subida de imágenes"
+	},
+	"imageUploadUploading": {
+	  "message": "Subiendo...",
+	  "description": "Estado durante la subida de imágenes"
+	},
+	"imageUploadErrorPrefix": {
+	  "message": "Error al subir",
+	  "description": "Prefijo de error de subida"
+	},
+	"imageUploadNoImagesError": {
+	  "message": "No hay imágenes válidas en la selección",
+	  "description": "Error cuando no se detectan imágenes válidas"
+	},
+	"imgbbTokenError": {
+	  "message": "No se pudo obtener token de ImgBB",
+	  "description": "Error al obtener token de sesión de ImgBB"
+	},
+	"imageUploadGenericError": {
+	  "message": "Subida rechazada por el servicio",
+	  "description": "Error genérico devuelto por el proveedor"
+	},
+	"postimagesResponseError": {
+	  "message": "Postimages no devolvió URL",
+	  "description": "Error cuando Postimages no devuelve URL"
+	},
+	"postimagesResolveError": {
+	  "message": "No se pudo resolver la URL directa en Postimages",
+	  "description": "Error resolviendo URL directa desde postimg.cc"
+	},
+	"editorIframeError": {
+	  "message": "No se encontró el iframe del editor",
+	  "description": "Error al localizar el iframe de TinyMCE"
 	}
 }

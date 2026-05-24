@@ -7,8 +7,10 @@ Actualmente el código del repositorio está orientado a navegadores Chromium. F
 ## Qué aporta hoy
 
 - Kit de emojis personalizados integrado en el editor de mensajes.
+- Subida directa de imágenes desde el editor con dos proveedores (`ImgBB` y `Postimages`) mediante arrastrar, pegar o clic.
 - Sistema de temas para cambiar el aspecto visual del foro.
 - Persistencia local de la preferencia de tema.
+- Búsqueda contextual por texto seleccionado en el foro (búsqueda interna FAB y búsqueda en Google restringida al FAB).
 - Zoom interactivo sobre imágenes no enlazadas dentro del foro.
 - Arquitectura simple en JavaScript sin proceso de build.
 
@@ -38,16 +40,38 @@ FABXTension está pensado específicamente para el entorno del FAB en `armasblan
 
 Cuando entras en la pantalla de publicación o respuesta del foro, la extensión detecta la barra de TinyMCE y añade un botón propio con acceso al kit ampliado de emojis. Al pulsar sobre uno de ellos, inserta directamente la imagen en el editor.
 
+### Subida de imágenes en el editor
+
+En la misma barra de TinyMCE se añaden dos botones nuevos, justo detrás del botón de emojis:
+
+1. `🖼️` + icono de `ImgBB`
+2. `🖼️` + icono de `Postimages`
+
+Al pulsar cualquiera se abre una ventana de subida de `200x200` que permite:
+
+- Arrastrar imágenes.
+- Pegar desde portapapeles.
+- Hacer clic para abrir el selector de archivos del sistema.
+
+Cada imagen subida se inserta automáticamente en el mensaje como:
+
+```html
+<p><img src="https://..." /></p>
+```
+
 ### Temas
 
-El cambio de tema se realiza desde el menú contextual del navegador:
+El cambio de tema se realiza desde el menú integrado en la interfaz del foro (desktop y menú hamburguesa en móvil). Se mantiene la preferencia en almacenamiento local y se reaplica al recargar páginas del FAB.
 
-1. Haz clic derecho en una página del FAB.
-2. Abre `FAB`.
-3. Entra en `Tema`.
-4. Elige `Por defecto` o `marfil`.
+### Menú contextual de búsqueda
 
-La preferencia queda guardada en almacenamiento local y se reaplica al volver a cargar páginas del foro.
+Si seleccionas texto en una página del FAB y haces clic derecho, aparecen acciones en el menú contextual para:
+
+1. Buscar en el FAB.
+2. Buscar en el FAB con Google (`site:armasblancas.mforos.com`).
+
+La codificación de consulta se adapta al destino para maximizar compatibilidad de búsqueda.
+Esta función está orientada a escritorio para no interferir con el menú contextual nativo en móvil.
 
 ### Zoom de imágenes
 
@@ -77,7 +101,7 @@ Las imágenes del foro que no estén envueltas en un enlace pueden ampliarse con
 
 - `FABXTension/manifest.json`: definición de la extensión, permisos, recursos y punto de entrada.
 - `FABXTension/main.js`: lógica principal inyectada en el foro, enrutado por URL, editor de mensajes y zoom de imágenes.
-- `FABXTension/events.js`: service worker con menú contextual, almacenamiento del tema e inyección de CSS.
+- `FABXTension/events.js`: service worker con menú contextual de búsqueda e inyección de CSS/JS de tema.
 - `FABXTension/res/emojis.json`: listado de emojis y metadatos de tamaño.
 - `FABXTension/themes/marfil.css`: tema adicional disponible actualmente.
 - `emojis/`: recursos gráficos públicos del proyecto.
@@ -178,6 +202,22 @@ Si un agente de IA va a trabajar sobre este repositorio desde Visual Studio Code
 - Incorporar mejoras específicas para más pantallas del FAB cuando exista una necesidad clara.
 
 ## Changelog
+
+### v1.2.0 - 2026-05-24
+
+- Se añaden dos botones de subida de imágenes en TinyMCE (ImgBB y Postimages), situados tras el botón de emojis.
+- La subida admite arrastrar, pegar desde portapapeles y selección de archivos por clic en una ventana de 200x200.
+- Tras completar la subida, cada imagen se inserta automáticamente en el editor como `<p><img src="..." /></p>`.
+- Se amplían permisos del manifiesto para integración con servicios de subida externos.
+- Se mueve la subida de imágenes al proceso de fondo para evitar bloqueos CORS en páginas del foro.
+
+### v1.1.1 - 2026-05-24
+
+- Se elimina del menú contextual la duplicidad de cambio de tema.
+- El menú contextual se orienta a búsqueda por texto seleccionado con dos acciones:
+	- Buscar en el FAB.
+	- Buscar en el FAB con Google.
+- La búsqueda contextual se mantiene en escritorio para evitar conflictos con la interacción nativa de móvil.
 
 ### v1.1.0 - 2026-05-24
 

@@ -15,18 +15,21 @@
   
   "host_permissions": [
     "http://*.mforos.com/*",
-    "https://*.mforos.com/*"
+    "https://*.mforos.com/*",
+    "https://imgbb.com/*",
+    "https://postimages.org/*",
+    "https://postimg.cc/*",
+    "https://i.postimg.cc/*"
   ],
   
   "web_accessible_resources": [
     {
-	  "resources": [ "res/emojis.json", "themes/*.css", "themes/*.js", "res/social-icons/*.png" ],
+	  "resources": [ "res/emojis.json", "themes/*.css", "themes/*.js", "res/social-icons/*.png", "res/*.png" ],
       "matches": ["http://*.mforos.com/*", "https://*.mforos.com/*"]
     }
   ], 
    
   "background": {
-    "service_worker": "events.js",
     "scripts": ["events.js"]
   },
   
